@@ -12,13 +12,13 @@
                     <div id="<?= $modalClass ?>-group" class="form-group">
                         <label for="<?= $formName ?>" class="col-sm-2 control-label"><?= $formLabel ?></label>
                         <div class="col-sm-10">
-                            <input type="text" class="form-control <?= $modalClass ?>" value="<?= isset($$formName) ? $$formName : '' ?>" name="<?= $formName ?>" id="<?= $formName ?>" placeholder="<?= $formLabel ?>">
+                            <input type="text" class="data-a form-control <?= $modalClass ?>" value="<?= isset($$formName) ? $$formName : '' ?>" name="<?= $formName ?>" id="<?= $formName ?>" placeholder="<?= $formLabel ?>">
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="notes" class="col-sm-2 control-label">Notes</label>
                         <div class="col-sm-10">
-                            <textarea name="notes" class="form-control" rows="3"><?= isset($notes) ? $notes : '' ?></textarea>
+                            <textarea name="notes" class="data-b form-control" rows="3"><?= isset($notes) ? $notes : '' ?></textarea>
                         </div>
                     </div>
                     <input type="hidden" name="campaign_client_id" />

@@ -5,9 +5,15 @@ var campaignManager = {
     projectId: null,
     jid: null,
     clientData: {},
+    callback: null,
+    button: null,
+    dt: null,
+    dd: null,
 
     initialize: function () {
-        this.getClientData();
+        this.getClientData(function() {
+            campaignManager.startUp();
+        });
         this.events();
     },
     events: function () {
@@ -33,6 +39,12 @@ var campaignManager = {
 
         $(document).on('click', '#editClient', function () {
             campaignManager.clientId = $(this).attr('clientid');
+            campaignManager.button = $(this);
+            campaignManager.dt = $('#formatted-client-list dt');
+            campaignManager.dd = $('#formatted-client-list dd');
+            campaignManager.callback = function () {
+                campaignManager.populateClientList();
+            };
 
             campaignManager.editModal('client', campaignManager.clientId, null);
         });
@@ -40,6 +52,12 @@ var campaignManager = {
         $(document).on('click', '#editContact', function () {
             var jid = $(this).attr('jid');
             campaignManager.clientId = $(document).find('#editClient').attr('clientid');
+            campaignManager.button = $(this);
+            campaignManager.dt = $('#formatted-contact-list dt');
+            campaignManager.dd = $('#formatted-contact-list dd');
+            campaignManager.callback = function () {
+                campaignManager.populateContactList(campaignManager.clientId);
+            };
 
             campaignManager.editModal('contact', campaignManager.clientId, jid);
         });
@@ -47,6 +65,12 @@ var campaignManager = {
         $(document).on('click', '#editProject', function () {
             var jid = $(this).attr('jid');
             campaignManager.clientId = $(document).find('#editClient').attr('clientid');
+            campaignManager.button = $(this);
+            campaignManager.dt = $('#formatted-project-list dt');
+            campaignManager.dd = $('#formatted-project-list dd');
+            campaignManager.callback = function () {
+                campaignManager.populateProjectList(campaignManager.clientId);
+            };
 
             campaignManager.editModal('project', campaignManager.clientId, jid);
         });
@@ -58,6 +82,17 @@ var campaignManager = {
                 $('#modal').modal('hide');
                 campaignManager.getClientData();
             });
+        });
+
+        /**
+         * Saves data that is entered into the modal form
+         */
+        $(document).on('click', '#modal #triggerSave', function () {
+            campaignManager.executeSave();
+        });
+
+        $(document).on('click', '#modal #triggerUpdate', function () {
+            campaignManager.executeUpdate($(document).find('input[name="record_id"]').val());
         });
 
         /**
@@ -84,13 +119,6 @@ var campaignManager = {
         });
 
         /**
-         * Saves data that is entered into the modal form
-         */
-        $(document).on('click', '#modal #triggerSave', function () {
-            campaignManager.executeSave();
-        });
-
-        /**
          * Loads Data that corresponds to the selected item within the client dropdown
          * **/
         $(document).on('click', '#project-type ul.data-list li a', function (e) {
@@ -111,7 +139,7 @@ var campaignManager = {
             campaignManager.loadContactInfo(clientId, internalId);
         });
 
-        $(document).on('click', '#client ul.data-list li a', function (e) {
+        $(document).on('click', '#client ul.data-list li a[id!="addNewClient"]', function (e) {
             e.preventDefault();
             var clientId = $(this).parent().attr('id');
 
@@ -124,7 +152,7 @@ var campaignManager = {
             $('#formatted-project-list').empty();
         });
     },
-    getClientData: function () {
+    getClientData: function (callback) {
         this.clientData = {};
 
         $.getJSON(campaignManager.basepath + '/clients', function (data) {
@@ -132,25 +160,37 @@ var campaignManager = {
                 campaignManager.clientData[val.id] = val;
             });
 
-            campaignManager.resetForm();
+            if (callback !== undefined) {
+                callback();
+            }
         });
     },
     populateClientList: function () {
-        var items = [];
+        var listItems = [],
+            $target = $(document).find('#client ul.data-list');
+
+        if ($target.find('#addNewClient').length > 0) {
+            listItems.push($target.find('#addNewClient').parent());
+        }
 
         $.each(this.clientData, function (key, val) {
-            items.push("<li id=\"" + val.id + "\"><a href=\"#\">" + val.name + "</a></li>");
+            listItems.push("<li id=\"" + val.id + "\"><a href=\"#\">" + val.name + "</a></li>");
         });
 
-        $('#client ul.data-list').html(items);
+        $target.html(listItems);
     },
     populateContactList: function (clientId) {
-        var listItems = [];
+        var listItems = [],
+            $target = $(document).find('#client-contact ul.data-list');
 
         if (clientId !== undefined) {
             var contacts = this.clientData[clientId].clientContacts;
 
             if (contacts !== undefined) {
+                if ($target.find('#addNewContact').length > 0) {
+                    listItems.push($target.find('#addNewContact').parent());
+                }
+
                 $.each(this.clientData[clientId].clientContacts, function (key, val) {
                     listItems.push("<li jid=\"" + key + "\" id=\"" + val.id + "\"><a href=\"#\">" + val.contact_name + "</a></li>");
                 });
@@ -163,15 +203,20 @@ var campaignManager = {
             listItems.push("<li><a>Please choose a client.</a></li>");
         }
 
-        $('#client-contact ul.data-list').html(listItems);
+        $target.html(listItems);
     },
     populateProjectList: function (clientId) {
-        var listItems = [];
+        var listItems = [],
+            $target = $(document).find('#project-type ul.data-list');
 
         if (clientId !== undefined) {
             var projects = this.clientData[clientId].campaignProjectTypes;
 
             if (projects !== undefined) {
+                if ($target.find('#addNewProject').length > 0) {
+                    listItems.push($target.find('#addNewProject').parent());
+                }
+
                 $.each(this.clientData[clientId].campaignProjectTypes, function (key, val) {
                     listItems.push("<li jid=\"" + key + "\" id=\"" + val.id + "\"><a href=\"#\">" + val.project_name + "</a></li>")
                 });
@@ -184,7 +229,7 @@ var campaignManager = {
             listItems.push("<li><a>Please choose a client.</a></li>");
         }
 
-        $('#project-type ul.data-list').html(listItems);
+        $target.html(listItems);
     },
     loadClientInfo: function (clientId) {
         var clientName = campaignManager.clientData[clientId].name,
@@ -252,14 +297,28 @@ var campaignManager = {
         });
         $('#modal').modal();
     },
+    executeUpdate: function (recordId) {
+        var formData = $("form").serialize(),
+            method = $("input[name='method']").val(),
+            route = campaignManager.basepath + '/' + method + '/' + recordId;
+
+        $.post(route, formData, function (data) {
+            if (data.status === true) {
+                campaignManager.button.html($('.data-a').val());
+                campaignManager.dt.html($('.data-a').val());
+                campaignManager.dd.html($('.data-b').val());
+                $('#modal').modal('hide');
+
+                campaignManager.getClientData(campaignManager.callback);
+            } else {
+                $('#modal').html(data.html);
+            }
+        });
+    },
     executeSave: function () {
         var formData = $("form").serialize(),
             method = $("input[name='method']").val(),
             route = campaignManager.basepath + '/' + method;
-
-        if (method !== 'add' && this.clientId !== null) {
-            route += '/' + this.clientId;
-        }
 
         $.post(route, formData, function (data) {
             if (data.status === true) {
@@ -303,11 +362,12 @@ var campaignManager = {
             $(document).find('textarea[name="notes"]').val(notes);
             $(document).find('input[name="method"]').val('update');
             $(document).find('input[name="record_id"]').val(recordId);
+            $(document).find('#triggerSave').attr('id', 'triggerUpdate');
             $('.dialog-footer').append('<button id="triggerDelete" type="button" class="btn btn-danger">Delete Record</button>');
         });
         $('#modal').modal();
     },
-    resetForm: function() {
+    startUp: function() {
         this.populateClientList();
         this.populateContactList();
         this.populateProjectList();
@@ -324,16 +384,20 @@ var campaignManager = {
                 $('.client-primary').attr('id', 'addNewClient').html('Add New Client');
                 break;
             case 'contact':
-                $('.contact-primary').attr('id', 'addNewContact').html('Add New Contact');
+                if ($('.contact-primary').attr('id') === 'initial') {
+                    $('.contact-primary').attr('id', 'addNewContact').html('Add New Contact');
+                }
                 break;
             case 'project':
-                $('.project-primary').attr('id', 'addNewProject').html('Add New Record');
+                if ($('.project-primary').attr('id') === 'initial') {
+                    $('.project-primary').attr('id', 'addNewProject').html('Add New Record');
+                }
                 break;
             case 'contact-empty':
-                $('.contact-primary').attr('id', '').html('Please choose a client...');
+                $('.contact-primary').attr('id', 'initial').html('Please choose a client...');
                 break;
             case 'project-empty':
-                $('.project-primary').attr('id', '').html('Please choose a client...');
+                $('.project-primary').attr('id', 'initial').html('Please choose a client...');
                 break;
         }
     }
