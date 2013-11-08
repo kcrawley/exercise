@@ -11,7 +11,7 @@ var campaignManager = {
     dd: null,
 
     initialize: function () {
-        this.getClientData(function() {
+        this.getClientData(function () {
             campaignManager.startUp();
         });
         this.events();
@@ -22,17 +22,27 @@ var campaignManager = {
         });
 
         $(document).on('click', '#addNewClient', function () {
+            campaignManager.callback = function () {
+                campaignManager.populateClientList();
+            };
+
             campaignManager.loadModal('client', null);
         });
 
         $(document).on('click', '#addNewContact', function () {
             var id = $(document).find('#editClient').attr('clientid');
+            campaignManager.callback = function () {
+                campaignManager.populateContactList(id);
+            };
 
             campaignManager.loadModal('contact', id);
         });
 
         $(document).on('click', '#addNewProject', function () {
             var id = $(document).find('#editClient').attr('clientid');
+            campaignManager.callback = function () {
+                campaignManager.populateProjectList(id);
+            }
 
             campaignManager.loadModal('project', id);
         });
@@ -77,10 +87,24 @@ var campaignManager = {
 
         $(document).on('click', '#triggerDelete', function () {
             var formData = $("form").serialize();
+            campaignManager.dt.empty();
+            campaignManager.dd.empty();
+            switch ($(document).find('input[name="form-type"]').val()) {
+                case 'client':
+                    campaignManager.startUp();
+                    break;
+                case 'contact':
+                    $('.contact-primary').attr('id', 'addNewContact').html('Add New Contact');
+                    break;
+                case 'project':
+                    $('.project-primary').attr('id', 'addNewProject').html('Add New Project');
+                    break;
+            }
+
 
             $.post(campaignManager.basepath + '/delete', formData, function () {
                 $('#modal').modal('hide');
-                campaignManager.getClientData();
+                campaignManager.getClientData(campaignManager.callback);
             });
         });
 
@@ -323,7 +347,7 @@ var campaignManager = {
         $.post(route, formData, function (data) {
             if (data.status === true) {
                 $('#modal').modal('hide');
-                campaignManager.getClientData();
+                campaignManager.getClientData(campaignManager.callback);
             } else {
                 $('#modal').html(data.html);
             }
@@ -369,8 +393,6 @@ var campaignManager = {
     },
     startUp: function() {
         this.populateClientList();
-        this.populateContactList();
-        this.populateProjectList();
         this.setAddNew('client');
         this.setAddNew('contact-empty');
         this.setAddNew('project-empty');
