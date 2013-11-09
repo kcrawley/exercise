@@ -42,7 +42,7 @@ var campaignManager = {
             var id = $(document).find('#editClient').attr('clientid');
             campaignManager.callback = function () {
                 campaignManager.populateProjectList(id);
-            }
+            };
 
             campaignManager.loadModal('project', id);
         });
@@ -94,10 +94,10 @@ var campaignManager = {
                     campaignManager.startUp();
                     break;
                 case 'contact':
-                    $('.contact-primary').attr('id', 'addNewContact').html('Add New Contact');
+                    campaignManager.setAddNew('contact');
                     break;
                 case 'project':
-                    $('.project-primary').attr('id', 'addNewProject').html('Add New Project');
+                    campaignManager.setAddNew('project');
                     break;
             }
 
@@ -169,6 +169,8 @@ var campaignManager = {
 
             campaignManager.swapClientButton(clientId);
             campaignManager.loadClientInfo(clientId);
+            campaignManager.setAddNew('contact');
+            campaignManager.setAddNew('project');
             campaignManager.populateContactList(clientId);
             campaignManager.populateProjectList(clientId);
 
@@ -221,8 +223,6 @@ var campaignManager = {
             } else {
                 listItems.push("<li><a>No records found.</a></li>")
             }
-
-            this.setAddNew('contact');
         } else {
             listItems.push("<li><a>Please choose a client.</a></li>");
         }
@@ -247,8 +247,6 @@ var campaignManager = {
             } else {
                 listItems.push("<li><a>No records found.</a></li>");
             }
-
-            this.setAddNew('project');
         } else {
             listItems.push("<li><a>Please choose a client.</a></li>");
         }
@@ -406,14 +404,10 @@ var campaignManager = {
                 $('.client-primary').attr('id', 'addNewClient').html('Add New Client');
                 break;
             case 'contact':
-                if ($('.contact-primary').attr('id') === 'initial') {
-                    $('.contact-primary').attr('id', 'addNewContact').html('Add New Contact');
-                }
+                $('.contact-primary').attr('id', 'addNewContact').html('Add New Contact');
                 break;
             case 'project':
-                if ($('.project-primary').attr('id') === 'initial') {
-                    $('.project-primary').attr('id', 'addNewProject').html('Add New Record');
-                }
+                $('.project-primary').attr('id', 'addNewProject').html('Add New Record');
                 break;
             case 'contact-empty':
                 $('.contact-primary').attr('id', 'initial').html('Please choose a client...');
