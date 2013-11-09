@@ -92,6 +92,8 @@ var campaignManager = {
             switch ($(document).find('input[name="form-type"]').val()) {
                 case 'client':
                     campaignManager.startUp();
+                    campaignManager.populateContactList();
+                    campaignManager.populateProjectList();
                     break;
                 case 'contact':
                     campaignManager.setAddNew('contact');
@@ -100,7 +102,6 @@ var campaignManager = {
                     campaignManager.setAddNew('project');
                     break;
             }
-
 
             $.post(campaignManager.basepath + '/delete', formData, function () {
                 $('#modal').modal('hide');
